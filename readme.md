@@ -41,33 +41,19 @@ DHCPREQUEST   ->  DHCPACK
 ```text
 
 UDP
-
  |
-
  v
-
 dhcp.Parse
-
  |
-
  v
-
 server.Handle
-
  |
-
  +--> lease.Pool
-
  |
-
  v
-
 dhcp.Encode
-
  |
-
  v
-
 UDP
 
 ```
@@ -77,27 +63,16 @@ UDP
 ```text
 
 .
-
 ├── README.md
-
 ├── main.go
-
 ├── dhcp/
-
 │   ├── message.go
-
 │   ├── options.go
-
 │   ├── parser.go
-
 │   └── encoder.go
-
 ├── server/
-
 │   └── server.go
-
 └── lease/
-
     └── pool.go
 
 ```
@@ -156,9 +131,9 @@ UDP
 
 - [X] Добавить константы типов DHCP-сообщений.
 
-- [ ] Добавить представление DHCP options.
+- [x] Добавить представление DHCP options.
 
-- [ ] Реализовать получение Message Type.
+- [x] Реализовать получение Message Type.
 
 - [ ] Реализовать получение Client Identifier.
 

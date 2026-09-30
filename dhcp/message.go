@@ -1,5 +1,7 @@
 package dhcp
 
+import "fmt"
+
 const (
 	// Фиксированные размеры полей в формате BOOTP/DHCPv4.
 	HardwareAddressSize = 16
@@ -35,12 +37,90 @@ type MessageType byte
 // MessageType определяет тип DHCP-сообщения.
 // Значение передаётся в DHCP option 53, а не в фиксированной части BOOTP-заголовка.
 const (
-	DHCPDiscover MessageType = 1
-	DHCPOffer    MessageType = 2
-	DHCPRequest  MessageType = 3
-	DHCPDecline  MessageType = 4
-	DHCPACK      MessageType = 5
-	DHCPNAK      MessageType = 6
-	DHCPRelease  MessageType = 7
-	DHCPInform   MessageType = 8
+	DHCPDiscover          MessageType = 1
+	DHCPOffer             MessageType = 2
+	DHCPRequest           MessageType = 3
+	DHCPDecline           MessageType = 4
+	DHCPACK               MessageType = 5
+	DHCPNAK               MessageType = 6
+	DHCPRelease           MessageType = 7
+	DHCPInform            MessageType = 8
+	DHCPMessageTypeOption             = 53
 )
+
+// GetMessageType получает тип DHCP-сообщения из Option 53.
+func (message Message) GetMessageType() (MessageType, error) {
+	options := message.Options
+
+	for position := 0; position < len(options); {
+		code := options[position]
+		position++
+
+		if code == 0 {
+			continue
+		}
+		if code == 255 {
+			break
+		}
+
+		if position >= len(options) {
+			return 0, fmt.Errorf(
+				"option %d has no length byte",
+				code,
+			)
+		}
+
+		length := int(options[position])
+		position++
+
+		// Проверяем, что значение целиком находится в массиве.
+		if position+length > len(options) {
+			return 0, fmt.Errorf(
+				"option %d is truncated: need %d bytes, have %d",
+				code,
+				length,
+				len(options)-position,
+			)
+		}
+
+		if code == DHCPMessageTypeOption {
+			if length != 1 {
+				return 0, fmt.Errorf(
+					"message type option must contain exactly 1 byte, got %d",
+					length,
+				)
+			}
+
+			messageType := MessageType(options[position])
+
+			if !isValidMessageType(messageType) {
+				return 0, fmt.Errorf(
+					"unknown DHCP message type: %d",
+					messageType,
+				)
+			}
+
+			return messageType, nil
+		}
+
+		position += length
+	}
+
+	return 0, fmt.Errorf("message type option %d not found", DHCPMessageTypeOption)
+}
+
+func isValidMessageType(messageType MessageType) bool {
+	switch messageType {
+	case DHCPDiscover,
+		DHCPOffer,
+		DHCPRequest,
+		DHCPDecline,
+		DHCPACK,
+		DHCPNAK,
+		DHCPRelease,
+		DHCPInform:
+		return true
+	default:
+		return false
+	}
+}
